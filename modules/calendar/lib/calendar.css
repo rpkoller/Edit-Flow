@@ -109,6 +109,10 @@ table#ef-calendar-view .day-unit.today {
 	border-top: 1px solid #000;
 }
 
+table#ef-calendar-view .day-item {
+	position: relative;
+}
+
 table#ef-calendar-view .day-unit{
 	position: relative;
 }
