@@ -728,7 +728,7 @@ class EF_Calendar extends EF_Module {
 							$week_posts[$week_single_date] = apply_filters( 'ef_calendar_posts_for_week', $week_posts[$week_single_date] );
 
 							foreach ( $week_posts[$week_single_date] as $num => $post ){ 
-								echo $this->generate_post_li_html( $post, $week_single_date, $num ); 
+								$this->generate_post_li_html( $post, $week_single_date, $num ); 
 							} 
 
 						 } 
@@ -830,15 +830,17 @@ class EF_Calendar extends EF_Module {
 		
 		?>
 		<li class="<?php echo esc_attr( implode( ' ', $post_classes ) ); ?>" id="post-<?php echo esc_attr( $post->ID ); ?>">
-			<div class="item-default-visible">
-				<div class="item-status"><span class="status-text"><?php echo esc_html( $this->get_post_status_friendly_name( get_post_status( $post_id ) ) ); ?></span></div>
-				<div class="inner">
-					<span class="item-headline post-title"><strong><?php echo esc_html( $post->post_title ); ?></strong></span>
-				</div>
-			</div>
 			<div style="clear:right;"></div>
-			<div class="item-inner">
-				<?php $this->get_inner_information( $this->get_post_information_fields( $post ), $post ); ?>
+			<div class="item-static">
+				<div class="item-default-visible">
+					<div class="item-status"><span class="status-text"><?php echo esc_html( $this->get_post_status_friendly_name( get_post_status( $post_id ) ) ); ?></span></div>
+					<div class="inner">
+						<span class="item-headline post-title"><strong><?php echo esc_html( $post->post_title ); ?></strong></span>
+					</div>
+				</div>
+				<div class="item-inner">
+					<?php $this->get_inner_information( $this->get_post_information_fields( $post ), $post ); ?>
+				</div>
 			</div>
 		</li>
 		<?php
@@ -864,9 +866,10 @@ class EF_Calendar extends EF_Module {
 						<th class="label"><?php echo esc_html( $values['label'] ); ?>:</th>
 						<?php if ( $values['value'] && isset($values['type']) ): ?>
 							<?php if( isset( $values['editable'] ) && $this->current_user_can_modify_post( $post ) ) : ?>
-								<td class="editable-value value <?php echo $values['type']; ?>"><?php echo esc_html( $values['value'] ); ?></td>
+								<td class="editable-value value"><?php echo esc_html( $values['value'] ); ?></td>
+								<td class="editable-html hidden" data-type="<?php echo $values['type']; ?>" data-metadataterm="<?php echo str_replace( 'editorial-metadata-', '', str_replace( 'tax_', '', $field ) ); ?>"><?php echo $this->get_editable_html( $values['type'], $values['value'] ); ?></td>
 							<?php else: ?>
-								<td class="value <?php echo $values['type']; ?>"><?php echo esc_html( $values['value'] ); ?></td>
+								<td class="value"><?php echo esc_html( $values['value'] ); ?></td>
 							<?php endif; ?>
 						<?php elseif( $values['value'] ): ?>
 							<td class="value"><?php echo esc_html( $values['value'] ); ?></td>
@@ -892,7 +895,7 @@ class EF_Calendar extends EF_Module {
 						$item_actions['view'] = '<a href="' . get_permalink( $post->ID ) . '" title="' . esc_attr( sprintf( __( 'View &#8220;%s&#8221;', 'edit-flow' ), $post->post_title ) ) . '" rel="permalink">' . __( 'View', 'edit-flow' ) . '</a>';
 					}
 					//Save metadata
-					$item_actions['save-metadata-hide'] = '<a href="#savemetadata" id="save-editorial-metadata" class="post-'. $post->ID .'" title="'. esc_attr( sprintf( __( 'Save &#8220;%s&#8221;', 'edit-flow' ), $post->post_title ) ) . '" >' . __( 'Save', 'edit-flow') . '</a>';
+					$item_actions['save hidden'] = '<a href="#savemetadata" id="save-editorial-metadata" class="post-'. $post->ID .'" title="'. esc_attr( sprintf( __( 'Save &#8220;%s&#8221;', 'edit-flow' ), $post->post_title ) ) . '" >' . __( 'Save', 'edit-flow') . '</a>';
 				}
 				// Allow other plugins to add actions
 				$item_actions = apply_filters( 'ef_calendar_item_actions', $item_actions, $post->ID );
@@ -910,6 +913,45 @@ class EF_Calendar extends EF_Module {
 		<?php
 
 	} // generate_post_li_html()
+
+	function get_editable_html( $type, $value ) {
+
+		switch( $type ) {
+			case 'text':
+			case 'location':
+			case 'number':
+				return '<input type="text" class="metadata-edit-' . $type . '" value="' . $value . '"/>';
+			break;
+			case 'paragraph':
+				return '<textarea type="text" class="metadata-edit-' . $type . '">' . $value . '</textarea>';
+			break;
+			case 'date':
+				return '<input type="text" value="' . $value . '" class="date-time-pick metadata-edit-' . $type . '"/>';
+			break;
+			case 'checkbox':
+				$output = '<select class="metadata-edit">';
+				
+				if( $value == 'No' )
+					$output .= '<option value="0">No</option><option value="1">Yes</option>';
+				else
+					$output .= '<option value="1">Yes</option><option value="0">No</option>';
+				
+				$output .= '</select>';
+
+				return $output;
+			break;
+			case 'user':
+			case 'author':
+				return wp_dropdown_users( array( 'echo' => false ) );
+			break;
+			case 'taxonomy':
+				return '<input type="text" class="metadata-edit-' . $type . '" value="' . $value . '" />';
+			break;
+			case 'taxonomy hierarchical':
+				return wp_dropdown_categories( array( 'echo' => 0, 'hide_empty' => 0 ) );
+			break;
+		}
+	}
 
 	/**
 	 * Get the information fields to be presented with each post popup
@@ -1503,31 +1545,29 @@ class EF_Calendar extends EF_Module {
 			$this->print_ajax_response( 'error', $this->module->messages['invalid-permissions'] );
 
 		$default_types = array(
-				'author',
-				'taxonomy',
-			);
+			'author',
+			'taxonomy',
+		);
+
 		$metadata_types = array();
+
 		if ( $this->module_enabled( 'editorial_metadata' ) )
 			$metadata_types = array_keys( EditFlow()->editorial_metadata->get_supported_metadata_types() );
 
-		$valid_types = array_merge( $default_types, $metadata_types );
-
-		if ( empty( $_POST['attr_type'] ) || ! in_array( $_POST['attr_type'], $valid_types ) )
-			$this->print_ajax_response( 'error', __( 'Invalid post metadata type', 'edit-flow' ) );
-
 		// Update an editorial metadata field
-		if ( in_array( $_POST['attr_type'], $metadata_types ) ) {
-			$post_meta_key = sanitize_text_field( '_ef_editorial_meta_' . $_POST['attr_type'] . '_' . $_POST['metadata_term'] );
+		if ( in_array( $_POST['metadata_type'], $metadata_types ) ) {
+			$post_meta_key = sanitize_text_field( '_ef_editorial_meta_' . $_POST['metadata_type'] . '_' . $_POST['metadata_term'] );
+
 			//Javascript date parsing is terrible, so use strtotime in php
-			if ( $_POST['attr_type'] == 'date' )
-				$metadata_value = strtotime( $_POST['metadata_value'] );
+			if ( $_POST['metadata_type'] == 'date' )
+				$metadata_value = strtotime( sanitize_text_filed( $_POST['metadata_value'] ) );
 			else
 				$metadata_value = sanitize_text_field( $_POST['metadata_value'] );
+
 			update_post_meta( $post->ID, $post_meta_key, $metadata_value );
 			$response = 'success';
 		} else {
-
-			switch( $_POST['attr_type'] ) {
+			switch( $_POST['metadata_type'] ) {
 				case 'author':
 					$ret = $wpdb->update( $wpdb->posts, array( 'post_author' => (int)$_POST['metadata_value'] ), array( 'ID' => $post->ID ) );
 					if ( $ret ) {
@@ -1536,33 +1576,20 @@ class EF_Calendar extends EF_Module {
 					} else {
 						$response = new WP_Error( 'invalid-type', __( 'Error updating post author.', 'edit-flow' ) );;
 					}
-					break;
+				break;
 				case 'taxonomy':
-					//This makes it nice and easy, becuase $_POST['metadata_value']
-					//will either be a comma separated string or a list of ids, one is needed
-					//for updating hierarchical structure, the other is used when not hierarchical
-					$taxonomy = sanitize_text_field( $_POST['metadata_term'] );
-					if ( ! is_array( $_POST['metadata_value'] ) )
-						$array_of_terms = explode( ',', $_POST['metadata_value'] );
-					else
-						$array_of_terms = $_POST['metadata_value'];
-					$array_of_terms = array_map( 'intval', $array_of_terms );
-
-					$response = wp_set_post_terms( $post->ID, $array_of_terms, $taxonomy );
-					break;
+				case 'taxonomy hierarchical':
+					$response = wp_set_post_terms( $post->ID, $_POST['metadata_value'], $_POST['metadata_term'] );
+				break;
 				default:
 					$response = new WP_Error( 'invalid-type', __( 'Invalid metadata type', 'edit-flow' ) );
-					break;
+				break;
 			}
 		}
 
-		ob_start();
-			$this->get_inner_information( $this->get_post_information_fields( $post ), $post );
-			$inner_info = ob_get_contents();
-		ob_end_clean();
-
+		//Assuming we've got to this point, just regurgitate the value
 		if ( ! is_wp_error( $response ) )
-			$this->print_ajax_response( 'success', $inner_info );
+			$this->print_ajax_response( 'success', $_POST['metadata_value'] );
 		else
 			$this->print_ajax_response( 'error', __( 'Metadata could not be updated.', 'edit-flow' ) );
 	}
