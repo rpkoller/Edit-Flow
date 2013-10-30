@@ -1,9 +1,9 @@
 jQuery(document).ready(function ($) {
 	
-	jQuery('a.show-more').click(function(){
-		var parent = jQuery(this).closest('td.day-unit');
-		jQuery('ul li', parent).removeClass('hidden');
-		jQuery(this).hide();
+	$('a.show-more').click(function(){
+		var parent = $(this).closest('td.day-unit');
+		$('ul li', parent).removeClass('hidden');
+		$(this).hide();
 		return false;
 	});
 
@@ -11,7 +11,7 @@ jQuery(document).ready(function ($) {
 	 * Listen for click event and subsitute correct type of replacement
 	 * html given the input type
 	 */
-	jQuery('.day-unit').on('click', '.editable-value', function( event ) {	
+	$('.day-unit').on('click', '.editable-value', function( event ) {	
 		//Reset anything that was currently being edited.
 		reset_editorial_metadata();
 
@@ -24,8 +24,8 @@ jQuery(document).ready(function ($) {
 	});
 
 	//Save the editorial metadata we've changed
-	jQuery('.day-unit').on('click', 'a#save-editorial-metadata', function() {
-		var post_id = jQuery(this).attr('class').replace('post-', '');
+	$('.day-unit').on('click', 'a#save-editorial-metadata', function() {
+		var post_id = $(this).attr('class').replace('post-', '');
 		save_editorial_metadata(post_id);
 		return false;
 	});
@@ -48,7 +48,7 @@ jQuery(document).ready(function ($) {
 	function save_editorial_metadata(post_id) {
 		var metadata_info = {
 			action: 'ef_calendar_update_metadata',
-			nonce: jQuery("#ef-calendar-modify").val(),
+			nonce: $("#ef-calendar-modify").val(),
 			metadata_type: $('.editing').attr('data-type'),
 			metadata_value: $('.editing').children().first().val(),
 			metadata_term: $('.editing').attr('data-metadataterm'),
@@ -82,19 +82,21 @@ jQuery(document).ready(function ($) {
 
 					reset_editorial_metadata();
 			},
-			error : function(r) { $('.editing').append('<span class="error">Error saving metadata.</span>'); }
+			error : function(r) { 
+				$('.editing').append('<span class="error">Error saving metadata.</span>'); 
+			}
 		});
 		
 	}
 	
 	// Hide a message. Used by setTimeout()
 	function edit_flow_calendar_hide_message() {
-		jQuery('.edit-flow-message').fadeOut(function(){ jQuery(this).remove(); });
+		$('.edit-flow-message').fadeOut(function(){ $(this).remove(); });
 	}
 	
 	// Close out all of the overlays with your escape key,
 	// or by clicking anywhere other than inside an existing overlay
-	jQuery(document).keydown(function(event) {
+	$(document).keydown(function(event) {
 		if (event.keyCode == '27') {
 			edit_flow_calendar_close_overlays();
 		}
@@ -109,80 +111,96 @@ jQuery(document).ready(function ($) {
 		var target = $(event.target);
 		//Case where we've clicked on the list item directly
 		if( target.hasClass('day-item') ) {
-			if( target.hasClass('active') )
+			if( target.hasClass('active') ) {
 				return;
-		}
-		//Case where we've clicked in the list item
-		target = target.closest('.day-item');
-		if( target ) {
-			if( target.hasClass('day-item') ) {
-				if( target.hasClass('active') )
-					return;
+			}
+			else if( target.hasClass( 'post-insert-overlay' ) ) {
+				return;
+			}
+			else {
+				edit_flow_calendar_close_overlays();
+
+				target.addClass('active')
+					.find('.item-static')
+					.removeClass('item-static')
+					.addClass('item-overlay');
+
+				return;
 			}
 		}
 
+		//Case where we've clicked in the list item
+		target = target.closest('.day-item');
+		if( target.length ) {
+			if( target.hasClass('day-item') ) {
+				if( target.hasClass('active') ) {
+					return;
+				}
+				else if( target.hasClass( 'post-insert-overlay' ) ) {
+					return;
+				}
+				else {
+					edit_flow_calendar_close_overlays();
+
+					target.addClass('active')
+						.find('.item-static')
+						.removeClass('item-static')
+						.addClass('item-overlay');
+
+					return;
+				}
+			}
+		}
+
+		target = $(event.target).closest('#ui-datepicker-div');
+		if( target.length )
+			return;
+
+		target = $(event.target).closest('.post-insert-dialog');
+		if( target.length )
+			return;
+
 		edit_flow_calendar_close_overlays();
 	});
-	
-	/**
-	 * Show the overlay for a post date
-	 */
-	function edit_flow_calendar_show_overlay( event ) {	
-		//If we've clicked on the original overlay (not the top part!), don't close it
-		if( $(this).hasClass('active') ) {
-			return;
-		} else {
-			$(this).addClass('active').find('.item-static')
-				.removeClass('item-static').addClass('item-overlay');
-		}
-	}
 
 	function edit_flow_calendar_close_overlays() {
 		reset_editorial_metadata();
 		$('.day-item.active').removeClass('active')
 			.find('.item-overlay').removeClass('item-overlay')
 			.addClass('item-static');
+
+		$('.post-insert-overlay').remove();
 	}
-	
-	/**
-	 * Bind the overlay click event to all list items within the posts list
-	 */
-	function edit_flow_calendar_bind_overlay() {
-		jQuery('td.day-unit ul li').bind({
-			'click.ef-calendar-show-overlay': edit_flow_calendar_show_overlay
-		});
-	}
-	edit_flow_calendar_bind_overlay();
 	
 	/**
 	 * Instantiates drag and drop sorting for posts on the calendar
 	 */
-	jQuery('td.day-unit ul').sortable({
+	$('td.day-unit ul').sortable({
 		items: 'li.day-item.sortable',
 		connectWith: 'td.day-unit ul',
 		placeholder: 'ui-state-highlight',
 		start: function(event, ui) {
-			jQuery(this).disableSelection();
+			$(this).disableSelection();
 			edit_flow_calendar_close_overlays();
-			jQuery('td.day-unit ul li').unbind('click.ef-calendar-show-overlay');
-			jQuery(this).css('cursor','move');
+			$('td.day-unit ul li').unbind('click.ef-calendar-show-overlay');
+			$(this).css('cursor','move');
 		},
 		sort: function(event, ui) {
-			jQuery('td.day-unit').removeClass('ui-wrapper-highlight');
-			jQuery('.ui-state-highlight').closest('td.day-unit').addClass('ui-wrapper-highlight');
+			$('td.day-unit').removeClass('ui-wrapper-highlight');
+			$('.ui-state-highlight').closest('td.day-unit').addClass('ui-wrapper-highlight');
 		},
 		stop: function(event, ui) {
-			jQuery(this).css('cursor','auto');
-			jQuery('td.day-unit').removeClass('ui-wrapper-highlight');
+			$(this).css('cursor','auto');
+			$('td.day-unit').removeClass('ui-wrapper-highlight');
 			// Only do a POST request if we moved the post off today
-			if ( jQuery(this).closest('.day-unit').attr('id') != jQuery(ui.item).closest('.day-unit').attr('id') ) {
-				var post_id = jQuery(ui.item).attr('id').split('-');
+			if ( $(this).closest('.day-unit').attr('id') != $(ui.item).closest('.day-unit').attr('id') ) {
+				var post_id = $(ui.item).attr('id').split('-');
 				post_id = post_id[post_id.length - 1];
-				var prev_date = jQuery(this).closest('.day-unit').attr('id');
-				var next_date = jQuery(ui.item).closest('.day-unit').attr('id');
-				var nonce = jQuery(document).find('#ef-calendar-modify').val();
-				jQuery('.edit-flow-message').remove();
-				jQuery('li.ajax-actions .waiting').show();
+				var prev_date = $(this).closest('.day-unit').attr('id');
+				var next_date = $(ui.item).closest('.day-unit').attr('id');
+				var nonce = $(document).find('#ef-calendar-modify').val();
+				$('.edit-flow-message').remove();
+				$('li.ajax-actions .waiting').show();
 				// make ajax request
 				var params = {
 					action: 'ef_calendar_drag_and_drop',
@@ -193,7 +211,7 @@ jQuery(document).ready(function ($) {
 				};
 				jQuery.post(ajaxurl, params,
 					function(response) {
-						jQuery('li.ajax-actions .waiting').hide();
+						$('li.ajax-actions .waiting').hide();
 						var html = '';
 						if ( response.status == 'success' ) {
 							html = '<div class="edit-flow-message edit-flow-updated-message">' + response.message + '</div>';
@@ -201,14 +219,12 @@ jQuery(document).ready(function ($) {
 						} else if ( response.status == 'error' ) {
 							html = '<div class="edit-flow-message edit-flow-error-message">' + response.message + '</div>';
 						}
-						jQuery('li.ajax-actions').prepend(html);
+						$('li.ajax-actions').prepend(html);
 						setTimeout( edit_flow_calendar_hide_message, 10000 );
 					}
 				);
 			}
-			jQuery(this).enableSelection();
-			// Allow the overlays to show up again
-			setTimeout( edit_flow_calendar_bind_overlay, 250 );
+			$(this).enableSelection();
 		}
 	});
 
@@ -221,15 +237,15 @@ jQuery(document).ready(function ($) {
 		 */
 		init : function(){
 
-			var $day_units = jQuery('td.day-unit');
+			var $day_units = $('td.day-unit');
 
 			// Bind the form display to the '+' button
 			// or to a double click on the calendar square
 			$day_units.find('.schedule-new-post-button').on('click.editFlow.quickPublish', EFQuickPublish.open_quickpost_dialogue );
 			$day_units.on('dblclick.editFlow.quickPublish', EFQuickPublish.open_quickpost_dialogue );
 			$day_units.hover(
-				function(){ jQuery(this).find('.schedule-new-post-button').stop().delay(500).fadeIn(100);},
-				function(){ jQuery(this).find('.schedule-new-post-button').stop().hide();}
+				function(){ $(this).find('.schedule-new-post-button').stop().delay(500).fadeIn(100);},
+				function(){ $(this).find('.schedule-new-post-button').stop().hide();}
 			);
 		}, // init
 
@@ -245,7 +261,7 @@ jQuery(document).ready(function ($) {
 			// Close other overlays
 			edit_flow_calendar_close_overlays();
 
-			$this = jQuery(this);
+			$this = $(this);
 
 			// Get the current calendar square
 			if( $this.is('td.day-unit') )
@@ -257,7 +273,7 @@ jQuery(document).ready(function ($) {
 			var $new_post_form_content = EFQuickPublish.$current_date_square.find('.post-insert-dialog');
 
 			//Inject the form (it will automatically be removed on click-away because of its 'item-overlay' class)
-			EFQuickPublish.$new_post_form = $new_post_form_content.clone().addClass('item-overlay').appendTo(EFQuickPublish.$current_date_square);
+			EFQuickPublish.$new_post_form = $new_post_form_content.clone().addClass('item-overlay post-insert-overlay').appendTo(EFQuickPublish.$current_date_square);
 			
 			// Get the inputs and controls for this injected form and focus the cursor on the post title box
 			var $edit_post_link = EFQuickPublish.$new_post_form.find('.post-insert-dialog-edit-post-link');
@@ -305,14 +321,14 @@ jQuery(document).ready(function ($) {
 						action: 'ef_insert_post',
 						ef_insert_date: EFQuickPublish.$new_post_form.find('input.post-insert-dialog-post-date').val(),
 						ef_insert_title: EFQuickPublish.$post_title_input.val(),
-						nonce: jQuery(document).find('#ef-calendar-modify').val()
+						nonce: $(document).find('#ef-calendar-modify').val()
 					},
 					success: function( response, textStatus, XMLHttpRequest ) {
 
 						if( response.status == 'success' ){
 
 							//The response message on success is the html for the a post list item
-							var $new_post = jQuery(response.message);
+							var $new_post = $(response.message);
 
 							if( redirect_to_draft ) {
 								//If user clicked on the 'edit post' link, let's send them to the new post
@@ -321,7 +337,6 @@ jQuery(document).ready(function ($) {
 							} else {
 								// Otherwise, inject the new post and bind the appropriate click event
 								$new_post.appendTo( EFQuickPublish.$current_date_square.find('ul.post-list') );
-								$new_post.on('click.ef-calendar-show-overlay', edit_flow_calendar_show_overlay );
 								edit_flow_calendar_close_overlays();
 							}
 

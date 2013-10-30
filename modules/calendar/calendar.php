@@ -1560,7 +1560,7 @@ class EF_Calendar extends EF_Module {
 
 			//Javascript date parsing is terrible, so use strtotime in php
 			if ( $_POST['metadata_type'] == 'date' )
-				$metadata_value = strtotime( sanitize_text_filed( $_POST['metadata_value'] ) );
+				$metadata_value = strtotime( sanitize_text_field( $_POST['metadata_value'] ) );
 			else
 				$metadata_value = sanitize_text_field( $_POST['metadata_value'] );
 
