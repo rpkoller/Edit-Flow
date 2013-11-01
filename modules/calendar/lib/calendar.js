@@ -14,13 +14,24 @@ jQuery(document).ready(function ($) {
 	$('.day-unit').on('click', '.editable-value', function( event ) {	
 		//Reset anything that was currently being edited.
 		reset_editorial_metadata();
+		var  t = this,
+		$editable_el = $(this).addClass('hidden').next('.editable-html');
 
-		$(this).addClass('hidden').next('.editable-html')
-			.removeClass('hidden')
+		if( $editable_el.children().first().is( 'select' ) ) {
+			$editable_el.find('option')
+				.each( function() {
+					if( $(this).text() == $(t).text() ) {
+						$(this).attr('selected', 'selected' );
+					}
+				});
+		}
+
+		$editable_el.removeClass('hidden')
 			.addClass('editing')
 			.closest('.day-item')
 			.find('.item-actions .save')
 			.removeClass('hidden');
+
 	});
 
 	//Save the editorial metadata we've changed

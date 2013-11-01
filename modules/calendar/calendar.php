@@ -1555,7 +1555,7 @@ class EF_Calendar extends EF_Module {
 			$metadata_types = array_keys( EditFlow()->editorial_metadata->get_supported_metadata_types() );
 
 		// Update an editorial metadata field
-		if ( isset( $_POST['metadat_type'] ) && in_array( $_POST['metadata_type'], $metadata_types ) ) {
+		if ( isset( $_POST['metadata_type'] ) && in_array( $_POST['metadata_type'], $metadata_types ) ) {
 			$post_meta_key = sanitize_text_field( '_ef_editorial_meta_' . $_POST['metadata_type'] . '_' . $_POST['metadata_term'] );
 
 			//Javascript date parsing is terrible, so use strtotime in php
