@@ -189,6 +189,10 @@ table#ef-calendar-view .day-unit .post-insert-dialog .post-insert-dialog-post-ti
 	margin-bottom: 10px;
 }
 
+table#ef-calendar-view .day-unit .post-insert-dialog .post-type-dropdown {
+	margin-bottom: 10px;
+}
+
 table#ef-calendar-view .day-unit ul {
 	margin-top: 22px;
 	margin-bottom: 0;

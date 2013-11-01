@@ -859,6 +859,7 @@ class EF_Calendar extends EF_Module {
 	 * @since 0.8
 	 */
 	function get_inner_information( $ef_calendar_item_information_fields, $post ) {
+		$current_user_can_edit = current_user_can( 'manage_options' );
 		?>
 			<table class="item-information">
 				<?php foreach( $this->get_post_information_fields( $post ) as $field => $values ): ?>
@@ -866,8 +867,10 @@ class EF_Calendar extends EF_Module {
 						<th class="label"><?php echo esc_html( $values['label'] ); ?>:</th>
 						<?php if ( $values['value'] && isset($values['type']) ): ?>
 							<?php if( isset( $values['editable'] ) && $this->current_user_can_modify_post( $post ) ) : ?>
-								<td class="editable-value value"><?php echo esc_html( $values['value'] ); ?></td>
-								<td class="editable-html hidden" data-type="<?php echo $values['type']; ?>" data-metadataterm="<?php echo str_replace( 'editorial-metadata-', '', str_replace( 'tax_', '', $field ) ); ?>"><?php echo $this->get_editable_html( $values['type'], $values['value'] ); ?></td>
+								<td class="value<?php if( $current_user_can_edit ) { ?> editable-value<?php } ?>"><?php echo esc_html( $values['value'] ); ?></td>
+								<?php if( $current_user_can_edit ): ?>
+									<td class="editable-html hidden" data-type="<?php echo $values['type']; ?>" data-metadataterm="<?php echo str_replace( 'editorial-metadata-', '', str_replace( 'tax_', '', $field ) ); ?>"><?php echo $this->get_editable_html( $values['type'], $values['value'] ); ?></td>
+								<?php endif; ?>
 							<?php else: ?>
 								<td class="value"><?php echo esc_html( $values['value'] ); ?></td>
 							<?php endif; ?>
@@ -1533,6 +1536,10 @@ class EF_Calendar extends EF_Module {
 
 		if ( ! wp_verify_nonce( $_POST['nonce'], 'ef-calendar-modify' ) )
 			$this->print_ajax_response( 'error', $this->module->messages['nonce-failed'] );
+
+		// Check that the user has the right capabilities to add posts to the calendar (defaults to 'edit_posts')
+		if ( !current_user_can( 'manage_options' ) )
+			$this->print_ajax_response( 'error', $this->module->messages['invalid-permissions'] );	
 		
 		// Check that we got a proper post
 		$post_id = ( int )$_POST['post_id'];
@@ -1548,6 +1555,8 @@ class EF_Calendar extends EF_Module {
 			'author',
 			'taxonomy',
 		);
+
+
 
 		$metadata_types = array();
 
