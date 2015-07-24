@@ -6,6 +6,8 @@ Description: Remixing the WordPress admin for better editorial workflow options.
 Author: Daniel Bachhuber, Scott Bressler, Mohammad Jangda, Automattic, and others
 Version: 0.8.1
 Author URI: http://editflow.org/
+Text Domain: edit-flow
+Domain Path: /languages
 
 Copyright 2009-2013 Mohammad Jangda, Daniel Bachhuber, et al.
 
